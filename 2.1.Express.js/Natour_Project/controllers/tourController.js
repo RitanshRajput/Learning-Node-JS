@@ -1,14 +1,20 @@
-//🔴building real API using real database
+/* eslint-disable node/no-unsupported-features/es-syntax */
 
+//🔴🔴 Adding advance technique to filtering
 const Tour = require('../models/tourModel');
 
 exports.getAllTours = async (req, res) => {
   try {
-    // find() is use to query all the document in a collection.
-    // this find() method will return an array of all these doc and will
-    // also verry nicely convert them into javaScript object.
-    const tours = await Tour.find();
+    //BUILD QUERY
+    const queryObj = { ...req.query };
+    const excludeFields = ['page', 'sort', 'limit', 'fields'];
+    excludeFields.forEach((el) => delete queryObj[el]);
 
+    const query = Tour.find(queryObj);
+    // EXECUTE QUERY
+    const tours = await query;
+
+    // SEND RESPONSE
     res.status(200).json({
       status: 'success',
       results: tours.length,
@@ -26,10 +32,7 @@ exports.getAllTours = async (req, res) => {
 
 exports.getTour = async (req, res) => {
   try {
-    // findOne() : to find the first match only one document
-    // findById() : to find the specified document by its ID
-    // so findById() is shorthand for Tour.findOne({ _id: req.params.id })
-    const tour = await Tour.findById(req.params.id); //we get this id from tourRoutes.js
+    const tour = await Tour.findById(req.params.id);
     res.status(200).json({
       status: 'success',
       data: {
@@ -46,13 +49,6 @@ exports.getTour = async (req, res) => {
 
 exports.createTour = async (req, res) => {
   try {
-    //🔸Normal way to create a instance of schema, and saving it in database
-    // const newTours = new Tour({})
-    // newTours.save()
-
-    //🔸advance way of doiing above implementation.
-    // so this function returns a promise and rather than doing .then
-    // we will make the entire function async await, also in async/await we use try/catch
     const newTour = await Tour.create(req.body);
 
     res.status(201).json({
@@ -64,23 +60,21 @@ exports.createTour = async (req, res) => {
   } catch (err) {
     res.status(400).json({
       status: 'fail',
-      message: 'Invalid data send',
+      message: err,
     });
   }
 };
 
 exports.updateTour = async (req, res) => {
   try {
-    // we will first find the doc with its ID and then update it
-    // here using mongoose we can do that in one line
     const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-      new: true, // this is use to send back the new update data
+      new: true,
       runValidators: true,
     });
     res.status(200).json({
       status: 'success',
       data: {
-        tour, // remember tour is actually { tour : tour } after es6 if the property name has same name of the value we can write it on once
+        tour,
       },
     });
   } catch (err) {
